@@ -1,9 +1,10 @@
-import { CompassIcon, FlameIcon } from "lucide-react";
+import { FlameIcon } from "lucide-react";
 import Link from "next/link";
 
 import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { useQuiz } from "@/components/quiz/QuizProvider";
 import { Badge } from "@/components/ui/badge";
+import Image from "next/image";
 
 export default function Navbar() {
   const { state } = useQuiz();
@@ -15,7 +16,8 @@ export default function Navbar() {
         className="flex min-h-11 items-center gap-2 rounded-xl font-heading text-lg font-bold tracking-tight text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
       >
         <span className="flex size-9 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-          <CompassIcon className="size-5" aria-hidden="true" />
+          {/*<CompassIcon className="size-5" aria-hidden="true" />*/}
+          <Image src="/logo.svg" alt="logo" width={100} height={100} />
         </span>
         Asia Atlas
       </Link>
