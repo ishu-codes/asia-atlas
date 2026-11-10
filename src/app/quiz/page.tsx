@@ -20,17 +20,12 @@ export default function QuizPage() {
   const skippedRef = useRef<Set<number>>(new Set());
 
   const question = state.questions[state.currentIndex];
-  const questionUrls = useMemo(
-    () => state.questions.map((item) => item.imageUrl),
-    [state.questions],
-  );
+  const questionUrls = useMemo(() => state.questions.map((item) => item.imageUrl), [state.questions]);
 
   usePreloadImages(questionUrls, state.currentIndex, 3);
 
   const imageStatus = useImageStatus(question?.imageUrl ?? "");
-  const answer = question
-    ? state.answers.find((item) => item.questionId === question.id)
-    : undefined;
+  const answer = question ? state.answers.find((item) => item.questionId === question.id) : undefined;
   const confirmed = answer !== undefined;
 
   const [selection, setSelection] = useState<{
@@ -38,10 +33,7 @@ export default function QuizPage() {
     value: string | null;
   }>({ questionId: null, value: null });
 
-  const selected =
-    selection.questionId === question?.id
-      ? selection.value
-      : (answer?.selected ?? null);
+  const selected = selection.questionId === question?.id ? selection.value : (answer?.selected ?? null);
 
   function setSelected(value: string) {
     if (question) {
@@ -91,21 +83,14 @@ export default function QuizPage() {
   if (state.status === "idle" || !question) {
     return (
       <main className="flex h-dvh items-center justify-center">
-        <Loader2
-          className="size-6 animate-spin text-muted-foreground"
-          aria-hidden="true"
-        />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </main>
     );
   }
 
   const total = state.questions.length;
   const isLast = state.currentIndex >= total - 1;
-  const timerRunning =
-    state.settings.timer &&
-    imageStatus === "ready" &&
-    !confirmed &&
-    state.status === "running";
+  const timerRunning = state.settings.timer && imageStatus === "ready" && !confirmed && state.status === "running";
 
   return (
     <main className="flex h-dvh w-full flex-col overflow-hidden">
@@ -116,43 +101,27 @@ export default function QuizPage() {
               <span className="font-heading text-3xl leading-none tabular-nums text-foreground">
                 {state.currentIndex + 1}
               </span>
-              <span className="text-sm font-medium text-muted-foreground">
-                / {total}
-              </span>
+              <span className="text-sm font-medium text-muted-foreground">/ {total}</span>
             </div>
 
             <div className="flex items-center gap-2.5">
               <ThemeToggle />
               {state.streak >= 3 ? (
-                <Badge
-                  variant="secondary"
-                  className="h-7 gap-1 px-2 tabular-nums"
-                >
-                  <Flame
-                    className="size-3.5 text-orange-600"
-                    aria-hidden="true"
-                  />
+                <Badge variant="secondary" className="h-7 gap-1 px-2 tabular-nums">
+                  <Flame className="size-3.5 text-orange-600" aria-hidden="true" />
                   {state.streak} streak
                 </Badge>
               ) : null}
               <div className="text-right">
-                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
-                  Score
-                </p>
-                <p className="text-lg leading-none font-semibold tabular-nums text-foreground">
-                  {state.score}
-                </p>
+                <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">Score</p>
+                <p className="text-lg leading-none font-semibold tabular-nums text-foreground">{state.score}</p>
               </div>
             </div>
           </div>
 
           {state.settings.timer ? (
             <div className="mt-2">
-              <TimerBar
-                running={timerRunning}
-                resetKey={question.id}
-                onExpire={handleExpire}
-              />
+              <TimerBar running={timerRunning} resetKey={question.id} onExpire={handleExpire} />
             </div>
           ) : null}
         </div>
@@ -208,11 +177,11 @@ export default function QuizPage() {
         </div>
       </div>
 
-      <footer className="z-[60] shrink-0 border-t border-border/60 bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2.5 backdrop-blur sm:px-8">
-        <div className="mx-auto w-full max-w-6xl">
+      <footer className="w-full z-[60] shrink-0 border-t border-border/60 bg-background/95 px-4 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-2.5 backdrop-blur sm:px-8">
+        <div className="mx-auto w-full max-w-6xl flex">
           <Button
             size="lg"
-            className="h-14 w-full rounded-xl text-base font-semibold lg:ml-auto lg:max-w-md"
+            className="h-14 w-full rounded-xl text-base font-semibold ml-auto! lg:ml-auto lg:max-w-md"
             disabled={!confirmed && selected === null}
             onClick={confirmed ? handleNext : handleConfirm}
           >

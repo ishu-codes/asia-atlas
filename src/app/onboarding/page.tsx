@@ -13,6 +13,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
 import Navbar from "@/components/app/Navbar";
+import { AppTabBar } from "@/components/app/AppTabBar";
 
 const STEPS = [
   {
@@ -76,14 +77,8 @@ export default function OnboardingPage() {
   }
 
   return (
-    <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+1.25rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:px-8">
+    <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:px-8">
       <Navbar />
-      {/*<Link
-        href="/"
-        className="flex min-h-11 items-center rounded-xl px-2 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-      >
-        Skip
-      </Link>*/}
 
       <div className="flex flex-1 flex-col justify-center py-5">
         <div
@@ -232,6 +227,8 @@ export default function OnboardingPage() {
           </section>
         </div>
       </div>
+
+      <AppTabBar />
     </main>
   );
 }

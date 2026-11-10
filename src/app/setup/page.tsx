@@ -1,21 +1,13 @@
 "use client";
 
 import { keepPreviousData } from "@tanstack/react-query";
-import { ArrowLeft, Compass, Loader2, Play } from "lucide-react";
-import Link from "next/link";
+import { Loader2, Play } from "lucide-react";
 import { useMemo, useState } from "react";
-import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Slider } from "@/components/ui/slider";
 import { Switch } from "@/components/ui/switch";
@@ -33,6 +25,8 @@ import {
 } from "@/lib/quiz";
 import { trpc } from "@/lib/trpc";
 import { cn } from "@/lib/utils";
+import Navbar from "@/components/app/Navbar";
+import { AppTabBar } from "@/components/app/AppTabBar";
 
 const CATEGORY_ITEMS = CATEGORIES.map((category) => ({
   value: category,
@@ -70,10 +64,7 @@ export default function SetupPage() {
   const ageMin = ageRange[0] ?? AGE_MIN;
   const ageMax = ageRange[1] ?? AGE_MAX;
 
-  const filters = useMemo(
-    () => ({ gender, ageMin, ageMax, category }),
-    [gender, ageMin, ageMax, category],
-  );
+  const filters = useMemo(() => ({ gender, ageMin, ageMax, category }), [gender, ageMin, ageMax, category]);
   const debouncedFilters = useDebouncedValue(filters, 200);
 
   const setupInfo = trpc.meta.setupInfo.useQuery(debouncedFilters, {
@@ -118,185 +109,124 @@ export default function SetupPage() {
   }
 
   return (
-    <main className="relative mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-[calc(env(safe-area-inset-top)+2rem)] sm:px-8 lg:pb-12 lg:pt-12">
-      <div
-        aria-hidden="true"
-        className="atlas-setup-glow pointer-events-none absolute inset-0"
-      />
+    <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+6.5rem)] pt-[calc(env(safe-area-inset-top)+0.75rem)] sm:px-8">
+      <Navbar />
 
-      <div className="relative grid flex-1 gap-9 lg:grid-cols-[minmax(0,0.82fr)_minmax(30rem,1.18fr)] lg:items-start lg:gap-16 xl:gap-24">
-        <header className="lg:sticky lg:top-12 lg:pt-14">
-          <div className="mb-6 flex items-center justify-between">
-            <Link
-              href="/"
-              className="inline-flex min-h-11 items-center gap-1.5 rounded-xl px-1 text-sm font-semibold text-muted-foreground transition-colors hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-            >
-              <ArrowLeft className="size-4" aria-hidden="true" />
-              Home
-            </Link>
-            <ThemeToggle />
-          </div>
-          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
-            <Compass className="size-4" aria-hidden="true" />
-            Asia Atlas
-          </div>
-          <h1 className="mt-4 max-w-2xl font-heading text-[2.9rem] leading-[0.94] tracking-tight text-foreground sm:text-6xl lg:text-7xl xl:text-[5.4rem]">
-            Guess the face.
-            <br />
-            Learn the <span className="text-primary">story.</span>
-          </h1>
-          <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground lg:mt-7 lg:text-base">
-            Four possible ethnicities. One real person behind every photo. Pick
-            an answer, then find out who you were looking at.
-          </p>
-        </header>
-
-        <div className="relative min-w-0">
-          <section className="mt-1 lg:mt-0">
-            <Card className="rounded-2xl border border-border/80 shadow-[0_18px_50px_-30px_oklch(0.3_0.04_60/0.45)] ring-0 lg:rounded-3xl">
-              <CardContent className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-x-5 lg:gap-y-6 lg:space-y-0 lg:p-6">
-                <div className="space-y-2.5 lg:col-span-2">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h2 className="text-sm font-semibold text-foreground">
-                      Questions
-                    </h2>
-                    <span className="text-xs text-muted-foreground">
-                      per round
-                    </span>
-                  </div>
-                  <ToggleGroup
-                    aria-label="Number of questions"
-                    value={[String(count)]}
-                    onValueChange={(values) => {
-                      const next = Number(values[0]);
-                      if (
-                        QUESTION_COUNTS.includes(
-                          next as (typeof QUESTION_COUNTS)[number],
-                        )
-                      ) {
-                        setCount(next);
-                      }
-                    }}
-                    className="grid w-full grid-cols-4 gap-1 rounded-xl bg-muted p-1"
-                  >
-                    {QUESTION_COUNTS.map((option) => (
-                      <ToggleGroupItem
-                        key={option}
-                        value={String(option)}
-                        className="h-12 rounded-lg text-sm font-semibold text-muted-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-sm"
-                      >
-                        {option}
-                      </ToggleGroupItem>
-                    ))}
-                  </ToggleGroup>
+      <section className="atlas-home-enter mt-7 flex flex-col-reverse md:flex-row items-center gap-8 lg:mt-12 lg:gap-20">
+        <div className="w-full md:w-1/2">
+          {/* Input form */}
+          <Card className="rounded-2xl border border-border/80 shadow-[0_18px_50px_-30px_oklch(0.3_0.04_60/0.45)] ring-0 lg:rounded-3xl">
+            <CardContent className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-x-5 lg:gap-y-6 lg:space-y-0 lg:p-6">
+              <div className="space-y-2.5 lg:col-span-2">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className="text-sm font-semibold text-foreground">Questions</h2>
+                  <span className="text-xs text-muted-foreground">per round</span>
                 </div>
-
-                <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-border bg-background/60 px-3.5 py-2">
-                  <div>
-                    <Label
-                      htmlFor="timer"
-                      className="text-sm font-semibold text-foreground"
+                <ToggleGroup
+                  aria-label="Number of questions"
+                  value={[String(count)]}
+                  onValueChange={(values) => {
+                    const next = Number(values[0]);
+                    if (QUESTION_COUNTS.includes(next as (typeof QUESTION_COUNTS)[number])) {
+                      setCount(next);
+                    }
+                  }}
+                  className="grid w-full grid-cols-4 gap-1 rounded-xl bg-muted p-1"
+                >
+                  {QUESTION_COUNTS.map((option) => (
+                    <ToggleGroupItem
+                      key={option}
+                      value={String(option)}
+                      className="h-12 rounded-lg text-sm font-semibold text-muted-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-sm"
                     >
-                      Timer
-                    </Label>
-                    <p className="text-xs text-muted-foreground">
-                      {TIMER_SECONDS} seconds per question
-                    </p>
-                  </div>
-                  <Switch
-                    id="timer"
-                    checked={timer}
-                    onCheckedChange={setTimer}
-                    aria-label="Enable timer"
+                      {option}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+
+              <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-border bg-background/60 px-3.5 py-2">
+                <div>
+                  <Label htmlFor="timer" className="text-sm font-semibold text-foreground">
+                    Timer
+                  </Label>
+                  <p className="text-xs text-muted-foreground">{TIMER_SECONDS} seconds per question</p>
+                </div>
+                <Switch id="timer" checked={timer} onCheckedChange={setTimer} aria-label="Enable timer" />
+              </div>
+
+              <div className="space-y-2.5">
+                <h2 className="text-sm font-semibold text-foreground">Photos of</h2>
+                <ToggleGroup
+                  aria-label="Gender of people in the photos"
+                  value={[gender]}
+                  onValueChange={handleGenderChange}
+                  className="grid w-full grid-cols-3 gap-1 rounded-xl bg-muted p-1"
+                >
+                  {GENDER_OPTIONS.map((option) => (
+                    <ToggleGroupItem
+                      key={option.value}
+                      value={option.value}
+                      className="h-12 rounded-lg text-sm font-semibold text-muted-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-sm"
+                    >
+                      {option.label}
+                    </ToggleGroupItem>
+                  ))}
+                </ToggleGroup>
+              </div>
+
+              <div className="space-y-3">
+                <div className="flex items-baseline justify-between gap-3">
+                  <h2 className="text-sm font-semibold text-foreground">Age range</h2>
+                  <Badge variant="secondary" className="tabular-nums">
+                    {ageMin}-{ageMax}
+                  </Badge>
+                </div>
+                <div className="px-1">
+                  <Slider
+                    value={ageRange}
+                    onValueChange={handleAgeChange}
+                    min={AGE_MIN}
+                    max={AGE_MAX}
+                    step={1}
+                    thumbLabels={["Minimum age", "Maximum age"]}
                   />
+                  <div className="mt-3 flex justify-between text-[11px] font-medium text-muted-foreground">
+                    <span>{AGE_MIN}</span>
+                    <span>{AGE_MAX}</span>
+                  </div>
                 </div>
+              </div>
 
-                <div className="space-y-2.5">
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Photos of
-                  </h2>
-                  <ToggleGroup
-                    aria-label="Gender of people in the photos"
-                    value={[gender]}
-                    onValueChange={handleGenderChange}
-                    className="grid w-full grid-cols-3 gap-1 rounded-xl bg-muted p-1"
-                  >
-                    {GENDER_OPTIONS.map((option) => (
-                      <ToggleGroupItem
-                        key={option.value}
-                        value={option.value}
-                        className="h-12 rounded-lg text-sm font-semibold text-muted-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-sm"
-                      >
-                        {option.label}
-                      </ToggleGroupItem>
+              <div className="space-y-2.5 lg:col-span-2">
+                <h2 className="text-sm font-semibold text-foreground">Category</h2>
+                <Select
+                  items={CATEGORY_ITEMS}
+                  value={category}
+                  onValueChange={(value) => {
+                    if (value) setCategory(value as Category);
+                  }}
+                >
+                  <SelectTrigger className="h-12 w-full rounded-xl bg-background/60 px-3.5 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[min(22rem,var(--available-height))]">
+                    {CATEGORIES.map((option) => (
+                      <SelectItem key={option} value={option} className="min-h-12 py-2.5">
+                        {option}
+                      </SelectItem>
                     ))}
-                  </ToggleGroup>
-                </div>
-
-                <div className="space-y-3">
-                  <div className="flex items-baseline justify-between gap-3">
-                    <h2 className="text-sm font-semibold text-foreground">
-                      Age range
-                    </h2>
-                    <Badge variant="secondary" className="tabular-nums">
-                      {ageMin}-{ageMax}
-                    </Badge>
-                  </div>
-                  <div className="px-1">
-                    <Slider
-                      value={ageRange}
-                      onValueChange={handleAgeChange}
-                      min={AGE_MIN}
-                      max={AGE_MAX}
-                      step={1}
-                      thumbLabels={["Minimum age", "Maximum age"]}
-                    />
-                    <div className="mt-3 flex justify-between text-[11px] font-medium text-muted-foreground">
-                      <span>{AGE_MIN}</span>
-                      <span>{AGE_MAX}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2.5 lg:col-span-2">
-                  <h2 className="text-sm font-semibold text-foreground">
-                    Category
-                  </h2>
-                  <Select
-                    items={CATEGORY_ITEMS}
-                    value={category}
-                    onValueChange={(value) => {
-                      if (value) setCategory(value as Category);
-                    }}
-                  >
-                    <SelectTrigger className="h-12 w-full rounded-xl bg-background/60 px-3.5 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent className="max-h-[min(22rem,var(--available-height))]">
-                      {CATEGORIES.map((option) => (
-                        <SelectItem
-                          key={option}
-                          value={option}
-                          className="min-h-12 py-2.5"
-                        >
-                          {option}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </CardContent>
-            </Card>
-          </section>
-
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+          {/* Status */}
           <div className="mt-4 space-y-2">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <span
                 aria-hidden="true"
-                className={cn(
-                  "size-2 rounded-full",
-                  noMatches ? "bg-red-500" : "bg-emerald-600",
-                )}
+                className={cn("size-2 rounded-full", noMatches ? "bg-red-500" : "bg-emerald-600")}
               />
               {loadingCount ? (
                 <Skeleton className="h-4 w-40" />
@@ -304,27 +234,22 @@ export default function SetupPage() {
                 <span>No people match these filters.</span>
               ) : (
                 <span>
-                  <strong className="font-semibold text-foreground">
-                    {total.toLocaleString()}
-                  </strong>{" "}
-                  people match these filters
+                  <strong className="font-semibold text-foreground">{total.toLocaleString()}</strong> people match these
+                  filters
                 </span>
               )}
             </div>
 
             {reducedCount ? (
               <p className="rounded-lg bg-amber-500/15 px-3 py-2 text-xs text-amber-900 dark:text-amber-100">
-                Only {total.toLocaleString()}{" "}
-                {total === 1 ? "person matches" : "people match"}. This round
-                will have {effectiveCount}{" "}
-                {effectiveCount === 1 ? "question" : "questions"}.
+                Only {total.toLocaleString()} {total === 1 ? "person matches" : "people match"}. This round will have{" "}
+                {effectiveCount} {effectiveCount === 1 ? "question" : "questions"}.
               </p>
             ) : null}
 
             {noMatches ? (
               <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive">
-                Widen the age range, choose Any, or pick All Categories to
-                start.
+                Widen the age range, choose Any, or pick All Categories to start.
               </p>
             ) : null}
 
@@ -334,28 +259,84 @@ export default function SetupPage() {
               </p>
             ) : null}
 
-            <p className="pt-1 text-center text-[11px] leading-relaxed text-muted-foreground lg:text-left">
+            {/*<p className="pt-1 text-center text-[11px] leading-relaxed text-muted-foreground lg:text-left">
               Ethnicity labels come from Wikidata records, never from the photo.
+            </p>*/}
+          </div>
+        </div>
+
+        {/* Text content */}
+        <div className="flex flex-col gap-6">
+          <div>
+            <h1 className="max-w-xl font-heading text-4xl leading-[0.98] tracking-[-0.045em] text-foreground sm:text-5xl lg:text-6xl">
+              Guess the face.
+              <br />
+              Learn the <span className="text-primary">story.</span>
+            </h1>
+            <p className="mt-4 max-w-md text-base leading-relaxed text-muted-foreground">
+              Four possible ethnicities. One real person behind every photo. Pick an answer, then find out who you were
+              looking at.
             </p>
           </div>
 
-          <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-xl bg-linear-to-t from-background via-background/95 to-transparent px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-4 lg:static lg:mt-5 lg:max-w-none lg:bg-none lg:p-0">
-            <Button
-              size="lg"
-              className="h-14 w-full rounded-xl text-base font-semibold shadow-lg shadow-primary/20 lg:shadow-md"
-              disabled={noMatches || loadingCount || starting}
-              onClick={handleStart}
-            >
-              {starting ? (
-                <Loader2 className="size-5 animate-spin" aria-hidden="true" />
-              ) : (
-                <Play className="size-5" aria-hidden="true" />
-              )}
-              Start quiz
-            </Button>
+          {error ? (
+            <p role="alert" className="mt-4 rounded-xl bg-destructive/10 px-3.5 py-3 text-sm text-destructive">
+              Could not start a round. {error.message}
+            </p>
+          ) : null}
+
+          <div className="hidden md:block">
+            <StartButton {...{ noMatches, loadingCount, starting, handleStart }} />
           </div>
+
+          {/*{hasSession ? (
+            <dl className="mt-7 flex flex-wrap gap-x-7 gap-y-3 border-t border-border/70 pt-4">
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground">This session</dt>
+                <dd className="mt-0.5 font-heading text-2xl font-bold tabular-nums">
+                  {state.score}
+                  <span className="text-sm font-medium text-muted-foreground"> / {answeredQuestions.length}</span>
+                </dd>
+              </div>
+              <div>
+                <dt className="text-xs font-medium text-muted-foreground">Current streak</dt>
+                <dd className="mt-0.5 font-heading text-2xl font-bold tabular-nums">{state.streak}</dd>
+              </div>
+            </dl>
+          ) : null}*/}
         </div>
-      </div>
+      </section>
+      <section className="md:hidden">
+        <StartButton {...{ noMatches, loadingCount, starting, handleStart }} />
+      </section>
+
+      <AppTabBar />
     </main>
+  );
+}
+
+interface StartButtonProps {
+  noMatches: boolean;
+  loadingCount: boolean;
+  starting: boolean;
+  handleStart: () => void;
+}
+function StartButton({ noMatches, loadingCount, starting, handleStart }: StartButtonProps) {
+  return (
+    <div className="md:mx-auto w-full max-w-xl bg-linear-to-t from-background via-background/95 to-transparent px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-4 lg:static lg:mt-5 lg:max-w-none lg:bg-none lg:p-0">
+      <Button
+        size="lg"
+        className="h-14 w-full rounded-xl text-base font-semibold shadow-lg shadow-primary/20 lg:shadow-md"
+        disabled={noMatches || loadingCount || starting}
+        onClick={handleStart}
+      >
+        {starting ? (
+          <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+        ) : (
+          <Play className="size-5" aria-hidden="true" />
+        )}
+        Start quiz
+      </Button>
+    </div>
   );
 }

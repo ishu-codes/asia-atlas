@@ -13,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { useStartRound } from "@/hooks/use-start-round";
 import { cn } from "@/lib/utils";
+import Navbar from "@/components/app/Navbar";
 
 type EthnicityRow = {
   ethnicity: string;
@@ -39,10 +40,7 @@ export default function ResultsPage() {
     }
   }, [state.status, router]);
 
-  const answered = useMemo(
-    () => state.answers.filter((answer) => !answer.skipped),
-    [state.answers],
-  );
+  const answered = useMemo(() => state.answers.filter((answer) => !answer.skipped), [state.answers]);
 
   const total = answered.length;
   const accuracy = total > 0 ? Math.round((state.score / total) * 100) : 0;
@@ -51,9 +49,7 @@ export default function ResultsPage() {
     const rows = new Map<string, EthnicityRow>();
 
     for (const answer of answered) {
-      const question = state.questions.find(
-        (item) => item.id === answer.questionId,
-      );
+      const question = state.questions.find((item) => item.id === answer.questionId);
       if (!question) continue;
 
       const row = rows.get(question.correct) ?? {
@@ -67,9 +63,7 @@ export default function ResultsPage() {
       rows.set(question.correct, row);
     }
 
-    return [...rows.values()].sort(
-      (a, b) => b.total - a.total || a.ethnicity.localeCompare(b.ethnicity),
-    );
+    return [...rows.values()].sort((a, b) => b.total - a.total || a.ethnicity.localeCompare(b.ethnicity));
   }, [answered, state.questions]);
 
   const mostConfused = useMemo<ConfusionRow | null>(() => {
@@ -77,9 +71,7 @@ export default function ResultsPage() {
 
     for (const answer of answered) {
       if (answer.correct || answer.selected === null) continue;
-      const question = state.questions.find(
-        (item) => item.id === answer.questionId,
-      );
+      const question = state.questions.find((item) => item.id === answer.questionId);
       if (!question) continue;
 
       const key = `${answer.selected}->${question.correct}`;
@@ -106,40 +98,24 @@ export default function ResultsPage() {
   if (state.status !== "finished") {
     return (
       <main className="flex h-dvh items-center justify-center">
-        <Loader2
-          className="size-6 animate-spin text-muted-foreground"
-          aria-hidden="true"
-        />
+        <Loader2 className="size-6 animate-spin text-muted-foreground" aria-hidden="true" />
       </main>
     );
   }
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+2rem)] sm:px-8 lg:pt-14">
-      <div className="mb-7 flex items-center justify-between">
-        <Link
-          href="/"
-          className="flex min-h-11 w-fit items-center gap-2 rounded-xl font-heading text-base font-bold tracking-tight text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
-        >
-          <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
-            <Compass className="size-4" aria-hidden="true" />
-          </span>
-          Asia Atlas
-        </Link>
-        <ThemeToggle />
-      </div>
-      <header className="max-w-3xl">
-        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
-          Round complete
-        </p>
+      <Navbar />
+
+      <header className="mt-4 max-w-3xl">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">Round complete</p>
         <h1 className="mt-3 font-heading text-5xl leading-[0.95] tracking-tight lg:text-6xl">
           Here is how
           <br />
           you <span className="text-primary">did.</span>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
-          You identified {state.score} of {total}{" "}
-          {total === 1 ? "person" : "people"} correctly.
+          You identified {state.score} of {total} {total === 1 ? "person" : "people"} correctly.
         </p>
       </header>
 
@@ -153,10 +129,7 @@ export default function ResultsPage() {
                 </p>
                 <p className="font-heading text-6xl leading-none tabular-nums text-foreground lg:text-7xl">
                   {state.score}
-                  <span className="text-2xl text-muted-foreground">
-                    {" "}
-                    / {total}
-                  </span>
+                  <span className="text-2xl text-muted-foreground"> / {total}</span>
                 </p>
               </div>
               <Badge variant="secondary" className="mb-1 tabular-nums">
@@ -166,39 +139,27 @@ export default function ResultsPage() {
             <Progress
               value={accuracy}
               aria-label="Accuracy"
-              className={cn(
-                "flex-col gap-0 [&_[data-slot=progress-track]]:h-2",
-              )}
+              className={cn("flex-col gap-0 [&_[data-slot=progress-track]]:h-2")}
             />
           </CardContent>
         </Card>
 
         <section className="mt-3 lg:col-start-2 lg:row-span-2 lg:row-start-1 lg:mt-0">
           <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-semibold text-foreground">
-              By ethnicity
-            </h2>
-            <span className="text-xs text-muted-foreground">
-              correct / seen
-            </span>
+            <h2 className="text-sm font-semibold text-foreground">By ethnicity</h2>
+            <span className="text-xs text-muted-foreground">correct / seen</span>
           </div>
 
           {breakdown.length > 0 ? (
             <div className="mt-2.5 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
               {breakdown.map((row) => {
-                const percent =
-                  row.total > 0 ? (row.correct / row.total) * 100 : 0;
+                const percent = row.total > 0 ? (row.correct / row.total) * 100 : 0;
 
                 return (
-                  <div
-                    key={row.ethnicity}
-                    className="space-y-2 px-4 py-3 lg:px-5 lg:py-4"
-                  >
+                  <div key={row.ethnicity} className="space-y-2 px-4 py-3 lg:px-5 lg:py-4">
                     <div className="flex items-center gap-2.5">
                       <EthnicityFlag ethnicity={row.ethnicity} />
-                      <span className="flex-1 text-sm font-medium text-foreground">
-                        {row.ethnicity}
-                      </span>
+                      <span className="flex-1 text-sm font-medium text-foreground">{row.ethnicity}</span>
                       <span className="text-xs tabular-nums text-muted-foreground">
                         {row.correct} / {row.total}
                       </span>
@@ -223,15 +184,13 @@ export default function ResultsPage() {
           {mostConfused ? (
             <>
               <span className="font-semibold">Most confused:</span> you picked{" "}
-              <span className="font-semibold">{mostConfused.picked}</span> when
-              the answer was{" "}
+              <span className="font-semibold">{mostConfused.picked}</span> when the answer was{" "}
               <span className="font-semibold">{mostConfused.correct}</span>
               {mostConfused.count > 1 ? ` (${mostConfused.count} times)` : ""}.
             </>
           ) : (
             <>
-              <span className="font-semibold">No mixed-up answers.</span> Every
-              pick you made was on the mark.
+              <span className="font-semibold">No mixed-up answers.</span> Every pick you made was on the mark.
             </>
           )}
         </div>
