@@ -45,8 +45,10 @@ export function OptionList({
               !status.confirmed &&
                 "border-border data-[state=checked]:border-primary data-[state=checked]:bg-primary/5",
               "has-[:focus-visible]:ring-3 has-[:focus-visible]:ring-ring/40",
-              isCorrect && "border-emerald-600 bg-emerald-50 text-emerald-950",
-              isWrong && "border-red-600 bg-red-50 text-red-950",
+              isCorrect &&
+                "border-emerald-600 bg-emerald-50 text-emerald-950 dark:border-emerald-500 dark:bg-emerald-950/40 dark:text-emerald-100",
+              isWrong &&
+                "border-red-600 bg-red-50 text-red-950 dark:border-red-500 dark:bg-red-950/35 dark:text-red-100",
               status.confirmed && "cursor-default",
             )}
           >
@@ -55,9 +57,9 @@ export function OptionList({
               className={cn(
                 "size-5",
                 isCorrect &&
-                  "border-emerald-700 data-checked:border-emerald-700 data-checked:bg-emerald-700",
+                  "border-emerald-700 data-checked:border-emerald-700 data-checked:bg-emerald-700 dark:border-emerald-500 dark:data-checked:border-emerald-500 dark:data-checked:bg-emerald-500",
                 isWrong &&
-                  "border-red-700 data-checked:border-red-700 data-checked:bg-red-700",
+                  "border-red-700 data-checked:border-red-700 data-checked:bg-red-700 dark:border-red-500 dark:data-checked:border-red-500 dark:data-checked:bg-red-500",
               )}
             />
             <EthnicityFlag ethnicity={option} />

@@ -64,5 +64,5 @@ export function isFullAgeRange(ageMin: number, ageMax: number): boolean {
 }
 
 export function formatAgeRange(ageMin: number, ageMax: number): string {
-  return `${ageMin}–${ageMax} years old`;
+  return `${ageMin}-${ageMax} years old`;
 }

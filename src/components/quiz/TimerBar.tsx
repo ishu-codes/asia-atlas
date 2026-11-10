@@ -58,7 +58,12 @@ export function TimerBar({ running, resetKey, onExpire }: TimerBarProps) {
     <div className="w-full space-y-1">
       <div className="flex items-center justify-between text-[11px] font-medium text-muted-foreground">
         <span className="uppercase tracking-[0.12em]">Time</span>
-        <span className={cn("tabular-nums", warning && "text-red-600")}>
+        <span
+          className={cn(
+            "tabular-nums",
+            warning && "text-red-600 dark:text-red-400",
+          )}
+        >
           {Math.ceil(secondsLeft)}s
         </span>
       </div>

@@ -3,6 +3,7 @@
 import { Flame, Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { OptionList } from "@/components/quiz/OptionList";
 import { useQuiz } from "@/components/quiz/QuizProvider";
 import { RevealCard } from "@/components/quiz/RevealCard";
@@ -121,6 +122,7 @@ export default function QuizPage() {
             </div>
 
             <div className="flex items-center gap-2.5">
+              <ThemeToggle />
               {state.streak >= 3 ? (
                 <Badge
                   variant="secondary"

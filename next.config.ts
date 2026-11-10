@@ -1,7 +1,6 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
   cacheComponents: true,
   partialPrefetching: true,
   turbopack: {
@@ -12,6 +11,9 @@ const nextConfig: NextConfig = {
       },
     },
   },
+  ...(process.env.NODE_ENV === "development" && {
+    allowedDevOrigins: ["192.168.1.18"],
+  }),
 };
 
 export default nextConfig;

@@ -1,16 +1,17 @@
 "use client";
 
-import { Loader2, RotateCcw, Settings2 } from "lucide-react";
+import { Compass, Loader2, RotateCcw, Settings2 } from "lucide-react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
+import { ThemeToggle } from "@/components/app/ThemeToggle";
 import { EthnicityFlag } from "@/components/quiz/EthnicityFlag";
 import { useQuiz } from "@/components/quiz/QuizProvider";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { preloadImage, preloadImages } from "@/hooks/use-preload-images";
-import { trpc } from "@/lib/trpc";
+import { useStartRound } from "@/hooks/use-start-round";
 import { cn } from "@/lib/utils";
 
 type EthnicityRow = {
@@ -27,9 +28,8 @@ type ConfusionRow = {
 
 export default function ResultsPage() {
   const router = useRouter();
-  const { state, dispatch } = useQuiz();
-  const startQuiz = trpc.quiz.start.useMutation();
-  const [replaying, setReplaying] = useState(false);
+  const { state } = useQuiz();
+  const { startRound, starting, error } = useStartRound();
 
   useEffect(() => {
     if (state.status === "idle") {
@@ -96,34 +96,11 @@ export default function ResultsPage() {
   }, [answered, state.questions]);
 
   async function handlePlayAgain() {
-    if (replaying) return;
-    setReplaying(true);
-
-    try {
-      const result = await startQuiz.mutateAsync(state.settings);
-      if (result.questions.length === 0) {
-        setReplaying(false);
-        return;
-      }
-
-      const urls = result.questions.map((question) => question.imageUrl);
-      await preloadImage(urls[0]);
-      void preloadImages(urls.slice(1, 4));
-
-      dispatch({
-        type: "START",
-        settings: state.settings,
-        questions: result.questions,
-      });
-      router.push("/quiz");
-    } catch {
-      setReplaying(false);
-    }
+    await startRound(state.settings);
   }
 
   function handleChangeSettings() {
-    dispatch({ type: "RESET" });
-    router.push("/");
+    router.push("/setup");
   }
 
   if (state.status !== "finished") {
@@ -139,6 +116,18 @@ export default function ResultsPage() {
 
   return (
     <main className="mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+1.5rem)] pt-[calc(env(safe-area-inset-top)+2rem)] sm:px-8 lg:pt-14">
+      <div className="mb-7 flex items-center justify-between">
+        <Link
+          href="/"
+          className="flex min-h-11 w-fit items-center gap-2 rounded-xl font-heading text-base font-bold tracking-tight text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring"
+        >
+          <span className="flex size-8 items-center justify-center rounded-xl bg-primary text-primary-foreground">
+            <Compass className="size-4" aria-hidden="true" />
+          </span>
+          Asia Atlas
+        </Link>
+        <ThemeToggle />
+      </div>
       <header className="max-w-3xl">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
           Round complete
@@ -146,7 +135,7 @@ export default function ResultsPage() {
         <h1 className="mt-3 font-heading text-5xl leading-[0.95] tracking-tight lg:text-6xl">
           Here is how
           <br />
-          you <span className="italic text-primary">did.</span>
+          you <span className="text-primary">did.</span>
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
           You identified {state.score} of {total}{" "}
@@ -247,9 +236,9 @@ export default function ResultsPage() {
           )}
         </div>
 
-        {startQuiz.error ? (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800 lg:col-span-2">
-            Could not start another round. {startQuiz.error.message}
+        {error ? (
+          <p className="rounded-lg bg-destructive/10 px-3 py-2 text-xs text-destructive lg:col-span-2">
+            Could not start another round. {error.message}
           </p>
         ) : null}
 
@@ -257,10 +246,10 @@ export default function ResultsPage() {
           <Button
             size="lg"
             className="h-14 w-full rounded-xl text-base font-semibold"
-            disabled={replaying || startQuiz.isPending}
+            disabled={starting}
             onClick={handlePlayAgain}
           >
-            {replaying || startQuiz.isPending ? (
+            {starting ? (
               <Loader2 className="size-5 animate-spin" aria-hidden="true" />
             ) : (
               <RotateCcw className="size-5" aria-hidden="true" />
