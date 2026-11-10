@@ -32,6 +32,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -39,3 +40,18 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# database
+prisma/*.db
+prisma/*.db-journal
+data/category-cache.json
+/data/people.json
+
+# generated Prisma client
+src/generated/
+
+# generated or local-only files
+/.gitattributes
+/prisma-8.md
+__pycache__/
+*.py[cod]

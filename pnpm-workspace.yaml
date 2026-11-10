@@ -1,3 +1,11 @@
 allowBuilds:
+  '@prisma/engines': true
+  better-sqlite3: true
+  esbuild: true
+  prisma: true
   sharp: false
   unrs-resolver: false
+minimumReleaseAgeExclude:
+  - '@trpc/client@11.26.0'
+  - '@trpc/react-query@11.26.0'
+  - '@trpc/server@11.26.0'

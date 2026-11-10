@@ -1,69 +1,376 @@
-import Image from "next/image";
+"use client";
 
-export default function Home() {
+import { keepPreviousData } from "@tanstack/react-query";
+import { Compass, Loader2, Play } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useMemo, useState } from "react";
+import { useQuiz } from "@/components/quiz/QuizProvider";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Slider } from "@/components/ui/slider";
+import { Switch } from "@/components/ui/switch";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { useDebouncedValue } from "@/hooks/use-debounced-value";
+import { preloadImage, preloadImages } from "@/hooks/use-preload-images";
+import { ALL_CATEGORIES, CATEGORIES, type Category } from "@/lib/categories";
+import {
+  AGE_MAX,
+  AGE_MIN,
+  DEFAULT_QUESTION_COUNT,
+  type GenderFilter,
+  QUESTION_COUNTS,
+  TIMER_SECONDS,
+} from "@/lib/quiz";
+import { trpc } from "@/lib/trpc";
+import { cn } from "@/lib/utils";
+
+const CATEGORY_ITEMS = CATEGORIES.map((category) => ({
+  value: category,
+  label: category,
+}));
+
+const GENDER_OPTIONS: { value: GenderFilter; label: string }[] = [
+  { value: "male", label: "Male" },
+  { value: "female", label: "Female" },
+  { value: "any", label: "Any" },
+];
+
+function StartingScreen() {
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert h-5 w-[100px]"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the{" "}
-            <code className="rounded bg-black/[.06] px-1.5 py-0.5 font-mono text-[0.9em] dark:bg-white/[.08]">
-              page.tsx
-            </code>{" "}
-            file.
+    <main className="mx-auto flex min-h-dvh w-full max-w-6xl items-center px-5 py-8 sm:px-8">
+      <div className="grid w-full items-center gap-8 lg:grid-cols-[minmax(0,0.8fr)_minmax(20rem,1fr)] lg:gap-16">
+        <Skeleton className="mx-auto aspect-[4/5] w-full max-w-md rounded-3xl" />
+        <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground lg:justify-start">
+          <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+          Preparing your first photo...
+        </div>
+      </div>
+    </main>
+  );
+}
+
+export default function SetupPage() {
+  const router = useRouter();
+  const { dispatch } = useQuiz();
+
+  const [count, setCount] = useState<number>(DEFAULT_QUESTION_COUNT);
+  const [timer, setTimer] = useState(true);
+  const [gender, setGender] = useState<GenderFilter>("any");
+  const [ageRange, setAgeRange] = useState<number[]>([AGE_MIN, AGE_MAX]);
+  const [category, setCategory] = useState<Category>(ALL_CATEGORIES);
+  const [starting, setStarting] = useState(false);
+
+  const ageMin = ageRange[0] ?? AGE_MIN;
+  const ageMax = ageRange[1] ?? AGE_MAX;
+
+  const filters = useMemo(
+    () => ({ gender, ageMin, ageMax, category }),
+    [gender, ageMin, ageMax, category],
+  );
+  const debouncedFilters = useDebouncedValue(filters, 200);
+
+  const setupInfo = trpc.meta.setupInfo.useQuery(debouncedFilters, {
+    placeholderData: keepPreviousData,
+  });
+
+  const startQuiz = trpc.quiz.start.useMutation();
+
+  const total = setupInfo.data?.total ?? 0;
+  const loadingCount = setupInfo.isLoading && !setupInfo.data;
+  const noMatches = !loadingCount && total === 0;
+  const effectiveCount = total > 0 ? Math.min(count, total) : count;
+  const reducedCount = !loadingCount && total > 0 && total < count;
+
+  async function handleStart() {
+    if (starting) return;
+    setStarting(true);
+
+    const settings = {
+      count: effectiveCount,
+      timer,
+      gender,
+      ageMin,
+      ageMax,
+      category,
+    };
+
+    try {
+      const result = await startQuiz.mutateAsync(settings);
+      if (result.questions.length === 0) {
+        setStarting(false);
+        return;
+      }
+
+      const urls = result.questions.map((question) => question.imageUrl);
+
+      // Wait only for the first photo. The next few decode in the background.
+      await preloadImage(urls[0]);
+      void preloadImages(urls.slice(1, 4));
+
+      dispatch({ type: "START", settings, questions: result.questions });
+      router.push("/quiz");
+    } catch {
+      setStarting(false);
+    }
+  }
+
+  function handleGenderChange(values: string[]) {
+    const next = values[0];
+    if (next === "male" || next === "female" || next === "any") {
+      setGender(next);
+    }
+  }
+
+  function handleAgeChange(value: number | readonly number[]) {
+    const next = Array.isArray(value) ? value : [value];
+    if (next.length >= 2) {
+      setAgeRange([next[0], next[1]]);
+    }
+  }
+
+  if (starting) {
+    return <StartingScreen />;
+  }
+
+  return (
+    <main className="relative mx-auto flex min-h-dvh w-full max-w-6xl flex-col px-5 pb-[calc(env(safe-area-inset-bottom)+6rem)] pt-[calc(env(safe-area-inset-top)+2rem)] sm:px-8 lg:pb-12 lg:pt-12">
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-[radial-gradient(ellipse_at_top_left,oklch(0.9_0.06_80/0.75),transparent_65%)] lg:h-[38rem]"
+      />
+
+      <div className="relative grid flex-1 gap-9 lg:grid-cols-[minmax(0,0.82fr)_minmax(30rem,1.18fr)] lg:items-start lg:gap-16 xl:gap-24">
+        <header className="lg:sticky lg:top-12 lg:pt-14">
+          <div className="flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-primary">
+            <Compass className="size-4" aria-hidden="true" />
+            Asia Atlas
+          </div>
+          <h1 className="mt-4 max-w-2xl font-heading text-[2.9rem] leading-[0.94] tracking-tight text-foreground sm:text-6xl lg:text-7xl xl:text-[5.4rem]">
+            Guess the face.
+            <br />
+            Learn the <span className="italic text-primary">story.</span>
           </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+          <p className="mt-4 max-w-md text-sm leading-relaxed text-muted-foreground lg:mt-7 lg:text-base">
+            Four possible ethnicities. One real person behind every photo. Pick
+            an answer, then find out who you were looking at.
           </p>
+        </header>
+
+        <div className="relative min-w-0">
+          <section className="mt-1 lg:mt-0">
+            <Card className="rounded-2xl border border-border/80 shadow-[0_18px_50px_-30px_oklch(0.3_0.04_60/0.45)] ring-0 lg:rounded-3xl">
+              <CardContent className="space-y-5 lg:grid lg:grid-cols-2 lg:gap-x-5 lg:gap-y-6 lg:space-y-0 lg:p-6">
+                <div className="space-y-2.5 lg:col-span-2">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="text-sm font-semibold text-foreground">
+                      Questions
+                    </h2>
+                    <span className="text-xs text-muted-foreground">
+                      per round
+                    </span>
+                  </div>
+                  <ToggleGroup
+                    aria-label="Number of questions"
+                    value={[String(count)]}
+                    onValueChange={(values) => {
+                      const next = Number(values[0]);
+                      if (
+                        QUESTION_COUNTS.includes(
+                          next as (typeof QUESTION_COUNTS)[number],
+                        )
+                      ) {
+                        setCount(next);
+                      }
+                    }}
+                    className="grid w-full grid-cols-4 gap-1 rounded-xl bg-muted p-1"
+                  >
+                    {QUESTION_COUNTS.map((option) => (
+                      <ToggleGroupItem
+                        key={option}
+                        value={String(option)}
+                        className="h-12 rounded-lg text-sm font-semibold text-muted-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-sm"
+                      >
+                        {option}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+
+                <div className="flex min-h-12 items-center justify-between gap-4 rounded-xl border border-border bg-background/60 px-3.5 py-2">
+                  <div>
+                    <Label
+                      htmlFor="timer"
+                      className="text-sm font-semibold text-foreground"
+                    >
+                      Timer
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      {TIMER_SECONDS} seconds per question
+                    </p>
+                  </div>
+                  <Switch
+                    id="timer"
+                    checked={timer}
+                    onCheckedChange={setTimer}
+                    aria-label="Enable timer"
+                  />
+                </div>
+
+                <div className="space-y-2.5">
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Photos of
+                  </h2>
+                  <ToggleGroup
+                    aria-label="Gender of people in the photos"
+                    value={[gender]}
+                    onValueChange={handleGenderChange}
+                    className="grid w-full grid-cols-3 gap-1 rounded-xl bg-muted p-1"
+                  >
+                    {GENDER_OPTIONS.map((option) => (
+                      <ToggleGroupItem
+                        key={option.value}
+                        value={option.value}
+                        className="h-12 rounded-lg text-sm font-semibold text-muted-foreground data-pressed:bg-card data-pressed:text-foreground data-pressed:shadow-sm"
+                      >
+                        {option.label}
+                      </ToggleGroupItem>
+                    ))}
+                  </ToggleGroup>
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-baseline justify-between gap-3">
+                    <h2 className="text-sm font-semibold text-foreground">
+                      Age range
+                    </h2>
+                    <Badge variant="secondary" className="tabular-nums">
+                      {ageMin}–{ageMax}
+                    </Badge>
+                  </div>
+                  <div className="px-1">
+                    <Slider
+                      value={ageRange}
+                      onValueChange={handleAgeChange}
+                      min={AGE_MIN}
+                      max={AGE_MAX}
+                      step={1}
+                      thumbLabels={["Minimum age", "Maximum age"]}
+                    />
+                    <div className="mt-3 flex justify-between text-[11px] font-medium text-muted-foreground">
+                      <span>{AGE_MIN}</span>
+                      <span>{AGE_MAX}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2.5 lg:col-span-2">
+                  <h2 className="text-sm font-semibold text-foreground">
+                    Category
+                  </h2>
+                  <Select
+                    items={CATEGORY_ITEMS}
+                    value={category}
+                    onValueChange={(value) => {
+                      if (value) setCategory(value as Category);
+                    }}
+                  >
+                    <SelectTrigger className="h-12 w-full rounded-xl bg-background/60 px-3.5 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="max-h-[min(22rem,var(--available-height))]">
+                      {CATEGORIES.map((option) => (
+                        <SelectItem
+                          key={option}
+                          value={option}
+                          className="min-h-12 py-2.5"
+                        >
+                          {option}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </CardContent>
+            </Card>
+          </section>
+
+          <div className="mt-4 space-y-2">
+            <div className="flex items-center gap-2 text-xs text-muted-foreground">
+              <span
+                aria-hidden="true"
+                className={cn(
+                  "size-2 rounded-full",
+                  noMatches ? "bg-red-500" : "bg-emerald-600",
+                )}
+              />
+              {loadingCount ? (
+                <Skeleton className="h-4 w-40" />
+              ) : noMatches ? (
+                <span>No people match these filters.</span>
+              ) : (
+                <span>
+                  <strong className="font-semibold text-foreground">
+                    {total.toLocaleString()}
+                  </strong>{" "}
+                  people match these filters
+                </span>
+              )}
+            </div>
+
+            {reducedCount ? (
+              <p className="rounded-lg bg-amber-100/70 px-3 py-2 text-xs text-amber-950">
+                Only {total.toLocaleString()}{" "}
+                {total === 1 ? "person matches" : "people match"}. This round
+                will have {effectiveCount}{" "}
+                {effectiveCount === 1 ? "question" : "questions"}.
+              </p>
+            ) : null}
+
+            {noMatches ? (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800">
+                Widen the age range, choose Any, or pick All Categories to
+                start.
+              </p>
+            ) : null}
+
+            {startQuiz.error ? (
+              <p className="rounded-lg bg-red-50 px-3 py-2 text-xs text-red-800">
+                Could not start the quiz. {startQuiz.error.message}
+              </p>
+            ) : null}
+
+            <p className="pt-1 text-center text-[11px] leading-relaxed text-muted-foreground lg:text-left">
+              Ethnicity labels come from Wikidata records, never from the photo.
+            </p>
+          </div>
+
+          <div className="fixed inset-x-0 bottom-0 z-20 mx-auto w-full max-w-xl bg-linear-to-t from-background via-background/95 to-transparent px-5 pb-[calc(env(safe-area-inset-bottom)+0.75rem)] pt-4 lg:static lg:mt-5 lg:max-w-none lg:bg-none lg:p-0">
+            <Button
+              size="lg"
+              className="h-14 w-full rounded-xl text-base font-semibold shadow-lg shadow-primary/20 lg:shadow-md"
+              disabled={noMatches || loadingCount || startQuiz.isPending}
+              onClick={handleStart}
+            >
+              {startQuiz.isPending ? (
+                <Loader2 className="size-5 animate-spin" aria-hidden="true" />
+              ) : (
+                <Play className="size-5" aria-hidden="true" />
+              )}
+              Start quiz
+            </Button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert h-[14px] w-4"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={14}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
+      </div>
+    </main>
   );
 }
