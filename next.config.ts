@@ -3,6 +3,9 @@ import type { NextConfig } from "next";
 const nextConfig: NextConfig = {
   cacheComponents: true,
   partialPrefetching: true,
+  outputFileTracingIncludes: {
+    "/api/trpc/[trpc]": ["./data/people.classified.json"],
+  },
   turbopack: {
     rules: {
       "*.css": {

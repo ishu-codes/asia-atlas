@@ -20,8 +20,8 @@ import { type ChoiceQuestion, classifier } from "../lib/classifier";
  *
  * By default, existing non-null categories are preserved and only null
  * categories are classified. `--refresh` reclassifies every person. The app
- * never calls the classifier. prisma/seed.ts imports the JSON this script
- * writes, keeping seeding fast and deterministic. Wikidata ids are stored as
+ * never calls the classifier. The server reads the JSON this script writes,
+ * keeping quiz generation fast and deterministic. Wikidata ids are stored as
  * integers and MongoDB `_id` values are removed from the output.
  */
 
